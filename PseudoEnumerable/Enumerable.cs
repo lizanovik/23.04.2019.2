@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Xml.Schema;
 
 namespace PseudoEnumerable
@@ -107,7 +106,28 @@ namespace PseudoEnumerable
         /// <exception cref="InvalidCastException">An element in the sequence cannot be cast to type TResult.</exception>
         public static IEnumerable<TResult> CastTo<TResult>(IEnumerable source)
         {
-            throw new NotImplementedException();
+            if (source is null)
+            {
+                throw new ArgumentNullException($"{nameof(source)} cannot be null!");
+            }
+
+            foreach (var item in source)
+            {
+                if (!(item is TResult))
+                {
+                    throw new InvalidCastException($"Impossible to convert {item.GetType()} to {typeof(TResult)}");
+                }
+            }
+
+            return DoCastTo<TResult>(source);
+        }
+
+        private static IEnumerable<TResult> DoCastTo<TResult>(IEnumerable source)
+        {
+            foreach (var item in source)
+            {
+                yield return (TResult)item;
+            }
         }
 
         /// <summary>
@@ -125,11 +145,6 @@ namespace PseudoEnumerable
         public static bool ForAll<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
         {
             Validate(source, predicate);
-            //if (source.Count() == Filter(source, predicate).Count())
-            //{
-            //    return true;
-            //}
-
             return ForAllCollection(source, predicate);
         }
 

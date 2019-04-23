@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,5 +38,13 @@ namespace PseudoEnumerable.Tests
         [TestCase(new int[] { int.MaxValue, 0, int.MaxValue }, ExpectedResult =false)]
         public bool FilterIsZeroForAllTests(IEnumerable<int> array)
             => array.ForAll(new Func<int, bool>(i => i == 0));
+
+        [TestCase(arg: new object [] {1, 2, 3, 4, -56, -85, -9}, ExpectedResult = new int[] { 1, 2, 3, 4, -56, -85, -9 })]
+        public IEnumerable<int> CastToTests(IEnumerable array)
+            => Enumerable.CastTo<int>(array);
+
+        [Test]
+        public void CastTo_InvalidItem_ThrowsInvalidCastException()
+            => Assert.Throws<InvalidCastException>(() => Enumerable.CastTo<int>(new object[] {5,"5" }));
     }
 }
