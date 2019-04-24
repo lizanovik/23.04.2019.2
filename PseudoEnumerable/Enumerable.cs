@@ -7,6 +7,7 @@ namespace PseudoEnumerable
 {
     public static class Enumerable
     {
+        #region API
         /// <summary>
         /// Filters a sequence of values based on a predicate.
         /// </summary>
@@ -20,21 +21,10 @@ namespace PseudoEnumerable
         /// <exception cref="ArgumentNullException">Throws if <paramref name="source"/> is null.</exception>
         /// <exception cref="ArgumentNullException">Throws if <paramref name="predicate"/> is null.</exception>
         public static IEnumerable<TSource> Filter<TSource>(this IEnumerable<TSource> source,
-            Func<TSource,bool> predicate)
+            Func<TSource, bool> predicate)
         {
             Validate(source, predicate);
             return DoFilter(source, predicate);
-        }
-
-        private static IEnumerable<TSource> DoFilter<TSource>(IEnumerable<TSource> source, Func<TSource, bool> predicate)
-        {
-            foreach (var item in source)
-            {
-                if (predicate(item))
-                {
-                    yield return item;
-                }
-            }
         }
 
         /// <summary>
@@ -57,14 +47,6 @@ namespace PseudoEnumerable
             return DoTransform(source, transformer);
         }
 
-        private static IEnumerable<TResult> DoTransform<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, TResult> transformer)
-        {
-            foreach (var item in source)
-            {
-                yield return transformer(item);
-            }
-        }
-
         /// <summary>
         /// Sorts the elements of a sequence in ascending order according to a key.
         /// </summary>
@@ -81,20 +63,7 @@ namespace PseudoEnumerable
             Func<TSource, TKey> key)
         {
             Validate(source, key);
-            return DoSortBy(new SortedDictionary<TKey, TSource>(), source, key);
-        }
-
-        private static IEnumerable<TSource> DoSortBy<TSource, TKey>(SortedDictionary<TKey, TSource> sDictionary, IEnumerable<TSource> source, Func<TSource, TKey> key)
-        {
-            foreach (var item in source)
-            {
-                sDictionary.Add(key(item),item);
-            }
-
-            foreach (var item in sDictionary.Values)
-            {
-                yield return item;
-            }
+            return DoSortBy(new SortedDictionary<TKey, List<TSource>>(), source, key);
         }
 
         /// <summary>
@@ -120,7 +89,7 @@ namespace PseudoEnumerable
                 throw new ArgumentNullException($"{nameof(comparer)} cannot be null!");
             }
 
-            return DoSortBy(new SortedDictionary<TKey,TSource>(comparer), source, key);
+            return DoSortBy(new SortedDictionary<TKey, List<TSource>>(comparer), source, key);
         }
 
         /// <summary>
@@ -151,14 +120,6 @@ namespace PseudoEnumerable
             return DoCastTo<TResult>(source);
         }
 
-        private static IEnumerable<TResult> DoCastTo<TResult>(IEnumerable source)
-        {
-            foreach (var item in source)
-            {
-                yield return (TResult)item;
-            }
-        }
-
         /// <summary>
         /// The method-generator of sequence of integers according some predicate.
         /// </summary>
@@ -176,14 +137,6 @@ namespace PseudoEnumerable
             return DoGenerate(start, count, predicate);
         }
 
-        private static IEnumerable<int> DoGenerate(int start, int count, Func<int, int> predicate)
-        {
-            for (int i = start; i < start + count; i++)
-            {
-                yield return predicate(i);
-            }
-        }
-
         /// <summary>
         /// Determines whether all elements of a sequence satisfy a condition.
         /// </summary>
@@ -199,10 +152,12 @@ namespace PseudoEnumerable
         public static bool ForAll<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate)
         {
             Validate(source, predicate);
-            return ForAllCollection(source, predicate);
-        }
+            return DoForAll(source, predicate);
+        } 
+        #endregion
 
-        private static bool ForAllCollection<TSource>(IEnumerable<TSource> source, Func<TSource, bool> predicate)
+        #region Private Methods
+        private static bool DoForAll<TSource>(IEnumerable<TSource> source, Func<TSource, bool> predicate)
         {
             foreach (var item in source)
             {
@@ -215,11 +170,19 @@ namespace PseudoEnumerable
             return true;
         }
 
+        private static IEnumerable<TResult> DoCastTo<TResult>(IEnumerable source)
+        {
+            foreach (var item in source)
+            {
+                yield return (TResult)item;
+            }
+        }
+
         private static void Validate<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, TResult> predicate)
         {
             if (source is null)
             {
-                throw  new ArgumentNullException($"{nameof(source)} cannot be null!");
+                throw new ArgumentNullException($"{nameof(source)} cannot be null!");
             }
 
             if (predicate is null)
@@ -227,5 +190,56 @@ namespace PseudoEnumerable
                 throw new ArgumentNullException($"{nameof(predicate)} cannot be null!");
             }
         }
+
+        private static IEnumerable<TSource> DoFilter<TSource>(IEnumerable<TSource> source, Func<TSource, bool> predicate)
+        {
+            foreach (var item in source)
+            {
+                if (predicate(item))
+                {
+                    yield return item;
+                }
+            }
+        }
+
+        private static IEnumerable<TResult> DoTransform<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, TResult> transformer)
+        {
+            foreach (var item in source)
+            {
+                yield return transformer(item);
+            }
+        }
+
+        private static IEnumerable<TSource> DoSortBy<TSource, TKey>(SortedDictionary<TKey, List<TSource>> sDictionary, IEnumerable<TSource> source, Func<TSource, TKey> key)
+        {
+            foreach (var item in source)
+            {
+                if (!sDictionary.ContainsKey(key(item)))
+                {
+                    sDictionary.Add(key(item), new List<TSource>() { item });
+                }
+                else
+                {
+                    sDictionary[key(item)].Add(item);
+                }
+            }
+
+            foreach (var itemList in sDictionary.Values)
+            {
+                foreach (var item in itemList)
+                {
+                    yield return item;
+                }
+            }
+        }
+
+        private static IEnumerable<int> DoGenerate(int start, int count, Func<int, int> predicate)
+        {
+            for (int i = start; i < start + count; i++)
+            {
+                yield return predicate(i);
+            }
+        } 
+        #endregion
     }
 }

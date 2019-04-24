@@ -49,10 +49,11 @@ namespace PseudoEnumerable.Tests
 
 
         [TestCase(arg: new int[] {1, 2, 3, 4, -56, -85, -9}, ExpectedResult = new int[] {1, 2, 3, 4,-9, -56, -85})]
+        [TestCase(arg: new int[] {-5, 5, 2,4,1}, ExpectedResult = new int[] { 1,2,4,-5,5 })]
         public IEnumerable<int> SortByAbsTests(IEnumerable<int> array)
             => Enumerable.SortBy(array, new Func<int, int>(x => Math.Abs(x)));
 
-        [TestCase(arg: new string[] { "good", "morning", "my", "sun"}, ExpectedResult = new string[] { "my", "sun", "good", "morning" })]
+        [TestCase(arg: new string[] { "good", "morning", "my", "dear"}, ExpectedResult = new string[] { "my", "good", "dear","morning" })]
         public IEnumerable<string> SortByLengthTests(IEnumerable<string> array)
             => Enumerable.SortBy(array, new Func<string, int>(x => x.Length));
 
