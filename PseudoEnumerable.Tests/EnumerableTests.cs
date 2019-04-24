@@ -46,5 +46,27 @@ namespace PseudoEnumerable.Tests
         [Test]
         public void CastTo_InvalidItem_ThrowsInvalidCastException()
             => Assert.Throws<InvalidCastException>(() => Enumerable.CastTo<int>(new object[] {5,"5" }));
+
+
+        [TestCase(arg: new int[] {1, 2, 3, 4, -56, -85, -9}, ExpectedResult = new int[] {1, 2, 3, 4,-9, -56, -85})]
+        public IEnumerable<int> SortByAbsTests(IEnumerable<int> array)
+            => Enumerable.SortBy(array, new Func<int, int>(x => Math.Abs(x)));
+
+        [TestCase(arg: new string[] { "good", "morning", "my", "sun"}, ExpectedResult = new string[] { "my", "sun", "good", "morning" })]
+        public IEnumerable<string> SortByLengthTests(IEnumerable<string> array)
+            => Enumerable.SortBy(array, new Func<string, int>(x => x.Length));
+
+
+        [TestCase(arg: new int[] { 1, 2, 3, 4 }, ExpectedResult = new string[] { "1", "2", "3", "4" })]
+        public IEnumerable<string> TransformTests(IEnumerable<int> array)
+            => Enumerable.Transform(array, new Func<int, string>(x => x.ToString()));
+
+        [TestCase(2, 5, ExpectedResult = new int[] { 2, 3, 4, 5, 6})]
+        public IEnumerable<int> GenerateTests(int start, int count)
+            => Enumerable.Generate(start, count, new Func<int, int>(x => x++));
+
+        [TestCase(9, 4, ExpectedResult = new int[] {81, 100, 121, 144})]
+        public IEnumerable<int> GenerateMoreTests(int start, int count)
+            => Enumerable.Generate(start, count, new Func<int, int>(x => x*x));
     }
 }
